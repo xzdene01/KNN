@@ -1,12 +1,13 @@
 import argparse
 
 def get_args():
-    parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+    parser = argparse.ArgumentParser(description='FASTopic wrapper for training, evaluation and comparision with LDA and BERTopic.')
 
-    parser.add_argument("--cache_dir", default="./models", type=str, help="Directory to store the downloaded models.")
+    parser.add_argument("--seed", default=42, type=int, help="Number to use for seeding all random actions (default: 42).")
+    parser.add_argument("--cache_dir", default="./models", type=str, help="Directory to store the downloaded models (not for final FASTopic model).")
 
     parser.add_argument('--load_path', type=str, help="Path to pretrained model checkpoint (default: no action).")
-    parser.add_argument('--save_path', type=str, help="Path to save the model to (default: no actions).")
+    parser.add_argument('--save_path', type=str, help="Path to save the model to (default: no action).")
 
     # Preprocessing parameters
     parser.add_argument("--vocab_size", type=int, default=7_000, help="Size of vocabulary (default: 7k).")
@@ -14,7 +15,7 @@ def get_args():
 
     # Documents parameters
     parser.add_argument("--docs_path",  type=str, default=None, help="Path to documents file (required if not loading model).")
-    parser.add_argument("--num_docs",   type=int, default=None, help="Number of documents and/or embeddings to use (default: all).")
+    parser.add_argument("--num_docs",   type=int, default=None, help="Number of documents and/or embeddings to use (default: all, but thats way too much).")
 
     # Embeddings parameters
     parser.add_argument("--embes_path", type=str, default=None, help="Path to 5h embeddings file (default: compute embeddings on the fly).")
@@ -23,7 +24,7 @@ def get_args():
     parser.add_argument("--num_topics",     type=int,    default=50,    help="Number of topics (default: 50).")
     parser.add_argument("--num_top_words",  type=int,    default=15,    help="Number of top words per topic (default: 15).")
     parser.add_argument("--device",         type=str,    default=None,  help="Device to use for training (default: auto try cuda).")
-    parser.add_argument("--log_interval",   type=int,    default=20,    help="Log interval when training (default: 20).")
+    parser.add_argument("--log_interval",   type=int,    default=10,    help="Log interval when training (default: 20).")
     parser.add_argument("--batch_size",     type=int,    default=None,  help="Batch size for low memory mode (default: all docs).")
 
     parser.add_argument("--norm_embes", action='store_true', help="Normalize embeddings, this will be passed to document embedder.")
