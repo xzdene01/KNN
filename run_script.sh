@@ -1,9 +1,13 @@
 #!bin/bash
 
-vocab_sizes=(20000 30000 40000 50000)
-nums_docs=(15000 20000 25000 30000 35000 40000)
 nums_topics=(75 100 125 150 175 200)
+nums_docs=(15000 20000 25000 30000 35000 40000)
+vocab_sizes=(20000 30000 40000 50000)
 
-exit
-
-python main.py --cache_dir models/ --save_path models/fastopic_model.zip --docs_path data/splits_segment0.jsonl --embes_path data/embeddings_segment0.h5 --batch_size 16000 --vocal_size 20000 --num_docs 15000 --num_topics 75
+python main.py \
+    --cache_dir models/ \
+    --save_path models/fastopic_all-MiniLM-L6-v2_10k.zip \
+    --docs_path data/splits_reduced.jsonl \
+    --embes_path data/splits_reduced_all-MiniLM-L6-v2 \
+    --debug --batch_size 2000 --seed 42 \
+    --num_topics 200 --num_docs 40000 --vocab_size 50000
