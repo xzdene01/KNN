@@ -10,4 +10,4 @@ python main.py \
     --docs_path data/splits_reduced.jsonl \
     --embes_path data/splits_reduced_all-MiniLM-L6-v2 \
     --debug --batch_size 2000 --seed 42 \
-    --num_topics 200 --num_docs 40000 --vocab_size 50000
+    --num_topics 75 --num_docs 10000 --vocab_size 20000
