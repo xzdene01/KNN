@@ -59,13 +59,7 @@ class FASTopicWrapper(WrapperBase):
                                                      normalize_embeddings=args.norm_embes,
                                                      verbose=args.verbose,
                                                      torch_dtype=torch_dtype)
-                    try:
-                        embeddings = embedder.encode(self.all_docs)
-                    except Exception as e:
-                        embeddings = torch.empty((0, embedder.model.get_sentence_embedding_dimension()), device=args.device)
-                        for doc in self.all_docs:
-                            doc_embe = embedder.encode([doc])
-                            embeddings = torch.cat((embeddings, doc_embe), dim=0)
+                    embeddings = embedder.encode(self.all_docs)
                     save_h5(args.embes_path, embeddings)
                     doc_embedder = StubEncoder(embeddings[self.doc_idxs])
                     logging.info(f"Computed and saved {embeddings.shape[0]} embeddings to {args.embes_path}.")
