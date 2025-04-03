@@ -30,7 +30,7 @@ class FASTopicWrapper(WrapperBase):
         docs = [docs[i] for i in self.doc_idxs]
 
         self.embedder_name = args.embe_model
-        # torch_dtype = torch.float16 if self.embedder_name == "BAAI/bge-multilingual-gemma2" else None
+        torch_dtype = torch.float16 if self.embedder_name == "BAAI/bge-multilingual-gemma2" else None
 
         # Load or train FASTopic model
         if args.load_path:
