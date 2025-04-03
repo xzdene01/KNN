@@ -62,6 +62,7 @@ class FASTopicWrapper(WrapperBase):
                     try:
                         embeddings = embedder.encode(self.all_docs)
                     except Exception as e:
+                        embeddings = torch.empty((0, embedder.model.get_sentence_embedding_dimension()), device=args.device)
                         for doc in self.all_docs:
                             doc_embe = embedder.encode([doc])
                             embeddings = torch.cat((embeddings, doc_embe), dim=0)
