@@ -1,5 +1,6 @@
 import os
 import json
+import torch
 import logging
 import argparse
 from stop_words import get_stop_words
@@ -9,7 +10,7 @@ from fastopic._utils import DocEmbedModel
 from topmost.eva import topic_diversity, topic_coherence
 
 from wrappers.wrapper_base import WrapperBase
-from utils.embedder import StubEncoder
+from utils.embedder import StubEncoder, BasicSentenceEmbedder
 from utils.dataset import get_shuffled_idxs, load_h5, save_h5
 from utils.tokenizers import CzechLemmatizedTokenizer
 
@@ -32,7 +33,7 @@ class FASTopicWrapper(WrapperBase):
 
         # !!! Hardcoded embedder name !!!
         self.embedder_name = args.embe_model
-        # self.embedder_name = "BAAI/bge-multilingual-gemma2:fp32"
+        torch_dtype = torch.float16 if self.embedder_name == "BAAI/bge-multilingual-gemma2" else None
 
         # Load or train FASTopic model
         if args.load_path:
@@ -56,10 +57,11 @@ class FASTopicWrapper(WrapperBase):
                 
                 # Pre-compute embeddings and save them, then use stub encoder with them
                 else:
-                    embedder = DocEmbedModel(model=self.embedder_name,
-                                             device=args.device,
-                                             normalize_embeddings=args.norm_embes,
-                                             verbose=args.verbose)
+                    embedder = BasicSentenceEmbedder(model=self.embedder_name,
+                                                     device=args.device,
+                                                     normalize_embeddings=args.norm_embes,
+                                                     verbose=args.verbose,
+                                                     torch_dtype=torch_dtype)
                     embeddings = embedder.encode(self.all_docs)
                     save_h5(args.embes_path, embeddings)
                     doc_embedder = StubEncoder(embeddings[self.doc_idxs])
@@ -67,7 +69,11 @@ class FASTopicWrapper(WrapperBase):
             
             # Compute embeddings on the fly
             else:
-                doc_embedder = self.embedder_name
+                doc_embedder = BasicSentenceEmbedder(model=self.embedder_name,
+                                                     device=args.device,
+                                                     normalize_embeddings=args.norm_embes,
+                                                     verbose=args.verbose,
+                                                     torch_dtype=torch_dtype)
                 logging.info(f"Using {self.embedder_name} to compute embeddings on the fly.")
 
             # Create FASTopic model

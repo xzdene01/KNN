@@ -8,6 +8,7 @@ embe_model="paraphrase-multilingual-MiniLM-L12-v2"
 model_root="models/fastopic_${embe_model}"
 log_root="logs/fastopic_${embe_model}"
 eval_root="results/fastopic_${embe_model}"
+
 for num_topics in "${nums_topics[@]}"; do
     for num_docs in "${nums_docs[@]}"; do
         for vocab_size in "${vocab_sizes[@]}"; do
@@ -27,9 +28,7 @@ for num_topics in "${nums_topics[@]}"; do
                 --embe_model "$embe_model" \
                 --debug --batch_size 2000 --seed 42 \
                 --num_topics "$num_topics" --num_docs "$num_docs" --vocab_size "$vocab_size" \
-                --log_path "$log_path" --eval_dir "$eval_dir" --epochs 1
-
-            exit 0
+                --log_path "$log_path" --eval_dir "$eval_dir" --epochs 200
         done
     done
 done
