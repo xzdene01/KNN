@@ -1,5 +1,8 @@
 __pycache__/
-
+*cache*/
 data/
+data_label/
 trash/
 models/
+logs/
+results/

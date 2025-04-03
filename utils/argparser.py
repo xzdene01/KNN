@@ -28,6 +28,7 @@ def get_args():
 
     # Embeddings parameters
     parser.add_argument("--embes_path", type=str, default=None, help="Path to save/load h5 embeddings (default: compute embeddings on the fly).")
+    parser.add_argument("--embe_model", type=str, default="all-MiniLM-L6-v2", help="Model to use for embeddings (default: all-MiniLM-L6-v2).")
 
     # FASTopic model parameters (will be ignored if loading model)
     parser.add_argument("--num_topics",     type=int,    default=50,    help="Number of topics (default: 50).")
@@ -41,8 +42,8 @@ def get_args():
     parser.add_argument("--epochs", type=int, default=200, help="Number of epochs to train (default: 200).")
     parser.add_argument("--lr",     type=float, default=0.002, help="Learning rate (default: 0.002).")
 
-    # Eval parameters
-    parser.add_argument("--eval", action='store_true', help="Run evaluation on the model.")
+    parser.add_argument("--log_path", type=str, default=None, help="Path to save logs (default: no action).")
+    parser.add_argument("--eval_dir", type=str, default=None, help="Path to save evaluation results (default: no action).")
 
     # Choose just verbore or debug, if debug set verbore to True
     group = parser.add_mutually_exclusive_group()
