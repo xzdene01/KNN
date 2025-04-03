@@ -3,6 +3,7 @@ import os
 os.environ["HF_HOME"] = "./models"
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
+import json
 import torch
 import logging
 
@@ -28,11 +29,30 @@ def main():
 
     wrapper = FASTopicWrapper(args)
 
-    logging.basicConfig(level=logging.WARNING, force=True)
-    print("Topic diversity:", wrapper.topic_diversity)
-    # print("Topic coherence:", wrapper.topic_coherence)
-    wrapper.visualize_hierarchy()
-    wrapper.visualize_weights()
+    logging.basicConfig(level=logging.INFO, force=True)
+
+    if args.log_path:
+        os.makedirs(os.path.dirname(args.log_path), exist_ok=True)
+        with open(args.log_path, "w") as f:
+            json_args = json.dumps(args.__dict__, indent=4)
+            f.write(f"Arguments: {json_args}\n")
+        logging.info(f"Arguments saved to {args.log_path}.")
+
+    if args.eval_dir:
+        os.makedirs(args.eval_dir, exist_ok=True)
+
+        with open(os.path.join(args.eval_dir, "diversity.txt"), "w") as f:
+            f.write(str(wrapper.topic_diversity))
+        
+        with open(os.path.join(args.eval_dir, "coherence.txt"), "w") as f:
+            f.write(str(wrapper.topic_coherence))
+        
+        logging.info(f"Evaluation results saved to {args.eval_dir}.")
+
+        wrapper.visualize_hierarchy(save_path=os.path.join(args.eval_dir, "hierarchy.png"))
+        wrapper.visualize_weights(save_path=os.path.join(args.eval_dir, "weights.png"))
+
+        logging.info(f"Visualizations saved to {args.eval_dir}.")
 
 
 if __name__ == '__main__':

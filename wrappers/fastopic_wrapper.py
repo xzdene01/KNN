@@ -8,12 +8,13 @@ from fastopic import FASTopic
 from fastopic._utils import DocEmbedModel
 from topmost.eva import topic_diversity, topic_coherence
 
+from wrappers.wrapper_base import WrapperBase
 from utils.embedder import StubEncoder
 from utils.dataset import get_shuffled_idxs, load_h5, save_h5
 from utils.tokenizers import CzechLemmatizedTokenizer
 
 
-class FASTopicWrapper:
+class FASTopicWrapper(WrapperBase):
     def __init__(self, args: argparse.Namespace):
         self.args = args
 
@@ -30,8 +31,8 @@ class FASTopicWrapper:
             docs = [docs[i] for i in self.doc_idxs]
 
         # !!! Hardcoded embedder name !!!
-        self.embedder_name = "all-MiniLM-L6-v2"
-        # self.embedder_name = "BAAI/bge-multilingual-gemma2"
+        self.embedder_name = args.embe_model
+        # self.embedder_name = "BAAI/bge-multilingual-gemma2:fp32"
 
         # Load or train FASTopic model
         if args.load_path:
@@ -61,7 +62,7 @@ class FASTopicWrapper:
                                              verbose=args.verbose)
                     embeddings = embedder.encode(self.all_docs)
                     save_h5(args.embes_path, embeddings)
-                    doc_embedder = StubEncoder(embeddings)
+                    doc_embedder = StubEncoder(embeddings[self.doc_idxs])
                     logging.info(f"Computed and saved {embeddings.shape[0]} embeddings to {args.embes_path}.")
             
             # Compute embeddings on the fly
@@ -90,7 +91,7 @@ class FASTopicWrapper:
             try:
                 self.model.save(args.save_path)
             except Exception as e:
-                logging.warning(f"Failed to save model to {args.save_path}. Saving model without tokenizer.")
+                logging.warning(f"Failed to save model with tokenizer, trying without.")
                 del self.model.preprocess.tokenizer
                 self.model.save(args.save_path)
 
@@ -111,10 +112,16 @@ class FASTopicWrapper:
         coherence = topic_coherence._coherence(texts, vocab, top_words)
         return coherence
     
-    def visualize_hierarchy(self):
+    def visualize_hierarchy(self, save_path=None):
         fig = self.model.visualize_topic_hierarchy()
-        fig.show()
+        if save_path:
+            fig.write_image(save_path)
+        else:
+            fig.show()
     
-    def visualize_weights(self):
+    def visualize_weights(self, save_path=None):
         fig = self.model.visualize_topic_weights()
-        fig.show()
+        if save_path:
+            fig.write_image(save_path)
+        else:
+            fig.show()
