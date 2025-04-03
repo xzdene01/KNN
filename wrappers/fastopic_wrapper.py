@@ -59,7 +59,15 @@ class FASTopicWrapper(WrapperBase):
                                                      normalize_embeddings=args.norm_embes,
                                                      verbose=args.verbose,
                                                      torch_dtype=torch_dtype)
-                    embeddings = embedder.encode(self.all_docs)
+                    try:
+                        embeddings = embedder.encode(self.all_docs)
+                    except Exception as e:
+                        logging.warning(f"Failed to compute embeddings for all documents, computing them in batches.")
+                        embeddings = []
+                        for i in range(0, len(self.all_docs), args.batch_size):
+                            batch = self.all_docs[i:i + args.batch_size]
+                            embeddings.append(embedder.encode(batch))
+                        embeddings = torch.cat(embeddings, dim=0)
                     save_h5(args.embes_path, embeddings)
                     doc_embedder = StubEncoder(embeddings[self.doc_idxs])
                     logging.info(f"Computed and saved {embeddings.shape[0]} embeddings to {args.embes_path}.")
