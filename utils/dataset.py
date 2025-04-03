@@ -1,7 +1,23 @@
 import h5py
 import torch
+import json
+import pandas as pd
 import numpy as np
 
+
+def load_docs(path: str):
+    extension = path.split(".")[-1]
+    with open(path, "r") as f:
+        if extension == "jsonl":
+            return [json.loads(line)["split"] for line in f.readlines()]
+
+        elif extension == "csv":
+            df = pd.read_csv(f)
+            return df["content"].tolist()
+
+        else:
+            raise ValueError(f"Unsupported file extension: {extension}. Supported extensions are: jsonl, csv.")
+    
 
 def get_shuffled_idxs(num_total, num_samples, device="cpu"):
     idxs = np.random.choice(num_total, size=num_samples, replace=False)

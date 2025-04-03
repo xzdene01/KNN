@@ -3,6 +3,7 @@ import json
 import torch
 import logging
 import argparse
+import pandas as pd
 from stop_words import get_stop_words
 from topmost.preprocess import Preprocess
 from fastopic import FASTopic
@@ -11,7 +12,7 @@ from topmost.eva import topic_diversity, topic_coherence
 
 from wrappers.wrapper_base import WrapperBase
 from utils.embedder import StubEncoder, BasicSentenceEmbedder
-from utils.dataset import get_shuffled_idxs, load_h5, save_h5
+from utils.dataset import get_shuffled_idxs, load_h5, save_h5, load_docs
 from utils.tokenizers import CzechLemmatizedTokenizer
 
 
@@ -19,21 +20,17 @@ class FASTopicWrapper(WrapperBase):
     def __init__(self, args: argparse.Namespace):
         self.args = args
 
-        # Load docs from jsonl file
-        with open(args.docs_path, "r") as f:
-            docs = [json.loads(line)["split"] for line in f.readlines()]
-            
-            if args.num_docs > len(docs):
-                args.num_docs = len(docs)
-                logging.warning(f"Number of documents is smaller than requested number of documents, using {args.num_docs} documents.")
+        # Load docs from jsonl file (jsonl or csv)
+        docs = load_docs(args.docs_path)
+        if args.num_docs > len(docs):
+            args.num_docs = len(docs)
+            logging.warning(f"Number of documents is smaller than requested number of documents, using {args.num_docs} documents.")
+        self.doc_idxs = get_shuffled_idxs(len(docs), args.num_docs, device=args.device)
+        self.all_docs = docs
+        docs = [docs[i] for i in self.doc_idxs]
 
-            self.doc_idxs = get_shuffled_idxs(len(docs), args.num_docs, device=args.device)
-            self.all_docs = docs
-            docs = [docs[i] for i in self.doc_idxs]
-
-        # !!! Hardcoded embedder name !!!
         self.embedder_name = args.embe_model
-        torch_dtype = torch.float16 if self.embedder_name == "BAAI/bge-multilingual-gemma2" else None
+        # torch_dtype = torch.float16 if self.embedder_name == "BAAI/bge-multilingual-gemma2" else None
 
         # Load or train FASTopic model
         if args.load_path:
