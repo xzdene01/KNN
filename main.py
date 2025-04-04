@@ -24,7 +24,7 @@ torch.load = load_wrapper
 
 def main():
     args = get_args()
-    logging.basicConfig(level=get_log_level(args))
+    logging.basicConfig(level=get_log_level(args), force=True)
     seed_everything(args)
     logging.debug(f"Arguments: {args.__dict__}")
 

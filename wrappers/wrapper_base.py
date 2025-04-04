@@ -15,21 +15,21 @@ class WrapperBase(ABC):
         """
         pass
 
-    @property
-    @abstractmethod
-    def topic_diversity(self) -> float:
-        """
-        Calculate and return the topic diversity.
-        """
-        pass
+    # @property
+    # @abstractmethod
+    # def topic_diversity(self) -> float:
+    #     """
+    #     Calculate and return the topic diversity.
+    #     """
+    #     pass
 
-    @property
-    @abstractmethod
-    def topic_coherence(self) -> float:
-        """
-        Calculate and return the topic coherence.
-        """
-        pass
+    # @property
+    # @abstractmethod
+    # def topic_coherence(self) -> float:
+    #     """
+    #     Calculate and return the topic coherence.
+    #     """
+    #     pass
 
     @abstractmethod
     def visualize_hierarchy(self) -> None:

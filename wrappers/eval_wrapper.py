@@ -1,4 +1,5 @@
 from wrappers.fastopic_wrapper import FASTopicWrapper
+from wrappers.wrapper_base import WrapperBase
 from utils.dataset import load_h5
 from topmost import eva
 from topmost import RawDataset, FASTopicTrainer
@@ -16,11 +17,18 @@ from topmost import Preprocess
 #
 # test_dataset_embeddings_path is the h5 file with embeddings
 class EvaluationWrapper:
-    def __init__(self, model_wrapper, test_dataset_path, test_dataset_embeddings_path, args):
+    def __init__(self, model_wrapper: WrapperBase):
         self.model_wrapper = model_wrapper
-        self.test_dataset_path = test_dataset_path
-        self.test_dataset_embeddings_path = test_dataset_embeddings_path
-        self.args = args
+        self.args = model_wrapper.args
+
+        if self.args.test_docs_path is None:
+            raise ValueError("test_docs_path is required for evaluation.")
+        
+        if self.args.test_embes_path is None:
+            raise ValueError("test_embes_path is required for evaluation.")
+
+        self.test_dataset_path = self.args.test_docs_path
+        self.test_dataset_embeddings_path = self.args.test_embes_path
 
     def evaluate(self):
         top_words = self.model_wrapper.model.get_top_words(self.model_wrapper.args.num_top_words, verbose=False)
@@ -38,14 +46,12 @@ class EvaluationWrapper:
 
         coherence = eva.topic_coherence._coherence(preprocessed_docs, vocab, top_words)
 
-        return coherence
-
         # Loading of dataset for clustering and classification
         dataset = pd.read_csv(self.test_dataset_path)
         test_data = dataset["content"]
         test_labels = dataset["topic"]
         n_topics = test_labels.nunique()
-        dataset_embeddings = load_h5(self.test_dataset_embeddings_path)
+        dataset_embeddings = load_h5(self.test_dataset_embeddings_path, device=self.args.device)
 
         # Calculate Purity and NMI
         test_theta = self.model_wrapper.model.transform(test_data, dataset_embeddings)

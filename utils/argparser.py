@@ -1,3 +1,4 @@
+import torch
 import logging
 import argparse
 
@@ -50,9 +51,17 @@ def get_args():
     group.add_argument("--verbose", action='store_true', help="Print additional info.")
     group.add_argument("--debug",   action='store_true', help="Print even more debug info.")
 
+    # Supervised testing parameters
+    parser.add_argument("--test_docs_path", type=str, default=None, help="Path to documents file used for supervised training.")
+    parser.add_argument("--test_embes_path", type=str, default=None, help="Path to embeddings file used for supervised training.")
+
     args = parser.parse_args()
 
     if args.debug:
         args.verbose = True
+    
+    if args.device is None:
+        args.device = "cuda" if torch.cuda.is_available() else "cpu"
+        logging.info(f"Using device: {args.device}.")
 
     return args

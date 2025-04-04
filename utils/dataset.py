@@ -1,6 +1,6 @@
 import h5py
-import torch
 import json
+import torch
 import pandas as pd
 import numpy as np
 
@@ -24,11 +24,14 @@ def get_shuffled_idxs(num_total, num_samples, device="cpu"):
     idxs = np.sort(idxs) # h5py requires sorted indices
     return torch.from_numpy(idxs).to(device)
 
+
 def load_h5(h5_path, device="cpu"):
     with h5py.File(h5_path, "r") as h5_file:
         dset = h5_file["embeddings"]
+        dset = np.array(dset)
         embeddings = torch.tensor(dset).to(device)
     return embeddings.to(torch.float32)
+
 
 def save_h5(h5_path, embeddings):
     with h5py.File(h5_path, "w") as h5_file:

@@ -33,7 +33,7 @@ class FASTopicWrapper(WrapperBase):
         # Load or train FASTopic model
         if args.load_path:
             logging.info(f"Loading model from {args.load_path}.")
-            self.model = FASTopic.from_pretrained(args.load_path)
+            self.model = FASTopic.from_pretrained(args.load_path, device=args.device)
         else:
             logging.info("Training model from scratch.")
         
@@ -99,19 +99,21 @@ class FASTopicWrapper(WrapperBase):
             logging.info(f"Model saved to {args.save_path}.")
         elif not args.load_path:
             logging.warning("Model was not saved, use --save_path to save the model.")
+        
+        logging.info(f"Model initialized with {self.args.num_topics} topics.")
     
-    @property
-    def topic_diversity(self):
-        top_words = self.model.get_top_words(self.args.num_top_words, verbose=False)
-        return topic_diversity._diversity(top_words)
+    # @property
+    # def topic_diversity(self):
+    #     top_words = self.model.get_top_words(self.args.num_top_words, verbose=False)
+    #     return topic_diversity._diversity(top_words)
     
-    @property
-    def topic_coherence(self):
-        texts = self.all_docs
-        vocab = self.model.vocab
-        top_words = self.model.get_top_words(self.args.num_top_words, verbose=False)
-        coherence = topic_coherence._coherence(texts, vocab, top_words)
-        return coherence
+    # @property
+    # def topic_coherence(self):
+    #     texts = self.all_docs
+    #     vocab = self.model.vocab
+    #     top_words = self.model.get_top_words(self.args.num_top_words, verbose=False)
+    #     coherence = topic_coherence._coherence(texts, vocab, top_words)
+    #     return coherence
     
     def visualize_hierarchy(self, save_path=None):
         fig = self.model.visualize_topic_hierarchy()
