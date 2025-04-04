@@ -39,6 +39,8 @@ for num_topics in "${nums_topics[@]}"; do
                 --save_path "$model_path" \
                 --docs_path data/splits_reduced.jsonl \
                 --embes_path data/splits_reduced_${embe_model}${norm}.h5 \
+                --test_docs_path data/reduced_dataset.csv \
+                --test_embes_path data/reduced_dataset_${embe_model}${norm}.h5 \
                 --embe_model "$embe_model" \
                 --debug --batch_size 1000 --seed 42 \
                 --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
