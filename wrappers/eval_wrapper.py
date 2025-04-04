@@ -3,6 +3,9 @@ from utils.dataset import load_h5
 from topmost import eva
 from topmost import RawDataset, FASTopicTrainer
 import pandas as pd
+from stop_words import get_stop_words
+from utils.tokenizers import CzechLemmatizedTokenizer
+from topmost import Preprocess
 
 # Wrapper class for evaluating the five evaluation metrics of a model
 # 
@@ -13,10 +16,11 @@ import pandas as pd
 #
 # test_dataset_embeddings_path is the h5 file with embeddings
 class EvaluationWrapper:
-    def __init__(self, model_wrapper, test_dataset_path, test_dataset_embeddings_path):
+    def __init__(self, model_wrapper, test_dataset_path, test_dataset_embeddings_path, args):
         self.model_wrapper = model_wrapper
         self.test_dataset_path = test_dataset_path
         self.test_dataset_embeddings_path = test_dataset_embeddings_path
+        self.args = args
 
     def evaluate(self):
         top_words = self.model_wrapper.model.get_top_words(self.model_wrapper.args.num_top_words, verbose=False)
@@ -25,7 +29,16 @@ class EvaluationWrapper:
         texts = self.model_wrapper.all_docs
         vocab = self.model_wrapper.model.vocab
         top_words = self.model_wrapper.model.get_top_words(self.model_wrapper.args.num_top_words, verbose=False)
-        coherence = eva.topic_coherence._coherence(texts, vocab, top_words)
+        stop_words = get_stop_words(self.args.stopwords)
+
+        # Fixes issue with nan: https://github.com/BobXWu/TopMost/issues/12
+        tokenizer = CzechLemmatizedTokenizer(stopwords=stop_words, cache_dir=self.args.cache_dir)
+        preprocessor = Preprocess(tokenizer=tokenizer, vocab_size = self.args.vocab_size, stopwords=stop_words, seed=self.args.seed, verbose=self.args.verbose)
+        preprocessed_docs, _ = preprocessor.parse(texts, vocab=vocab)
+
+        coherence = eva.topic_coherence._coherence(preprocessed_docs, vocab, top_words)
+
+        return coherence
 
         # Loading of dataset for clustering and classification
         dataset = pd.read_csv(self.test_dataset_path)
