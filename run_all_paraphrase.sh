@@ -1,8 +1,10 @@
 #!bin/bash
 
-nums_topics=(50 100)
+# If you want to only test models, rename --save_path to --load_path and remove --log_path
+
+nums_topics=(20 200)
 nums_docs=(10000 20000)
-vocab_sizes=(40000)
+vocab_sizes=(40000 0) # Setting this to 0 will use the whole available vocabulary
 
 norm="" # For non-normalized embeddings, set to "" (empty string) otherwise set to "_norm"
 
@@ -22,6 +24,12 @@ for num_topics in "${nums_topics[@]}"; do
             log_path="${log_root}/fastopic_${num_topics}_${num_docs}_${vocab_size}.log"
             eval_dir="${eval_root}/fastopic_${num_topics}_${num_docs}_${vocab_size}"
 
+            if [ "$vocab_size" -eq 0 ]; then
+                vocab_cmd=""
+            else
+                vocab_cmd="--vocab_size $vocab_size"
+            fi
+
             echo "========================================="
             echo "Running with num_topics=${num_topics}, num_docs=${num_docs}, vocab_size=${vocab_size}"
             echo "========================================="
@@ -31,10 +39,9 @@ for num_topics in "${nums_topics[@]}"; do
                 --save_path "$model_path" \
                 --docs_path data/splits_reduced.jsonl \
                 --embes_path data/splits_reduced_${embe_model}${norm}.h5 \
-                --embes_path data/splits_reduced_${embe_basename}.h5 \
                 --embe_model "$embe_model" \
                 --debug --batch_size 1000 --seed 42 \
-                --num_topics "$num_topics" --num_docs "$num_docs" \
+                --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
                 --log_path "$log_path" --eval_dir "$eval_dir" --epochs 200 ${normalize}
         done
     done
