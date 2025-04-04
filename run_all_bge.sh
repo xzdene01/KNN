@@ -6,14 +6,15 @@ vocab_sizes=(40000)
 
 norm="" # For non-normalized embeddings, set to "" (empty string) otherwise set to "_norm"
 
-embe_model="paraphrase-multilingual-MiniLM-L12-v2"
-model_root="models/fastopic_${embe_model}${norm}"
-log_root="logs/fastopic_${embe_model}${norm}"
-eval_root="results/fastopic_${embe_model}${norm}"
+embe_model="BAAI/${embe_basename}"
+model_root="models/fastopic_${embe_basename}${norm}"
+log_root="logs/fastopic_${embe_basename}${norm}"
+eval_root="results/fastopic_${embe_basename}${norm}"
 
 if [ -n "$norm" ]; then
     normalize="--norm_embes"
 fi
+
 
 for num_topics in "${nums_topics[@]}"; do
     for num_docs in "${nums_docs[@]}"; do
@@ -31,7 +32,6 @@ for num_topics in "${nums_topics[@]}"; do
                 --save_path "$model_path" \
                 --docs_path data/splits_reduced.jsonl \
                 --embes_path data/splits_reduced_${embe_model}${norm}.h5 \
-                --embes_path data/splits_reduced_${embe_basename}.h5 \
                 --embe_model "$embe_model" \
                 --debug --batch_size 1000 --seed 42 \
                 --num_topics "$num_topics" --num_docs "$num_docs" \
