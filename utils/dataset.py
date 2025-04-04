@@ -28,7 +28,7 @@ def load_h5(h5_path, device="cpu"):
     with h5py.File(h5_path, "r") as h5_file:
         dset = h5_file["embeddings"]
         embeddings = torch.tensor(dset).to(device)
-    return embeddings
+    return embeddings.to(torch.float32)
 
 def save_h5(h5_path, embeddings):
     with h5py.File(h5_path, "w") as h5_file:
