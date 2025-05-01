@@ -42,13 +42,14 @@ def main():
     if args.eval_dir:
         os.makedirs(args.eval_dir, exist_ok=True)
 
-        eval_wrapper = EvaluationWrapper(wrapper)
-        results = eval_wrapper.evaluate()
+        if args.test_docs_path is not None:
+            eval_wrapper = EvaluationWrapper(wrapper)
+            results = eval_wrapper.evaluate()
 
-        print(f"Evaluation results: {results}")
-        with open(os.path.join(args.eval_dir, "results.json"), "w") as f:
-            json.dump(results, f, indent=4)
-        print(f"Evaluation results saved to {args.eval_dir}.")
+            print(f"Evaluation results: {results}")
+            with open(os.path.join(args.eval_dir, "results.json"), "w") as f:
+                json.dump(results, f, indent=4)
+            print(f"Evaluation results saved to {args.eval_dir}.")
 
         wrapper.visualize_hierarchy(save_path=os.path.join(args.eval_dir, "hierarchy.png"))
         wrapper.visualize_weights(save_path=os.path.join(args.eval_dir, "weights.png"))

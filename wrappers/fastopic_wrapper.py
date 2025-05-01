@@ -4,6 +4,7 @@ import logging
 import argparse
 import pandas as pd
 from stop_words import get_stop_words
+import stopwordsiso as stopwords
 from topmost.preprocess import Preprocess
 from fastopic import FASTopic
 from topmost.eva import topic_diversity, topic_coherence
@@ -38,7 +39,9 @@ class FASTopicWrapper(WrapperBase):
             logging.info("Training model from scratch.")
         
             # Create Preprocessor that will be later used to convert data into BoW representation
-            stop_words = get_stop_words(args.stopwords)
+            stop_words = get_stop_words(args.stopwords) + list(stopwords.stopwords("cs"))
+            # print(f"Stop words: {stop_words}")
+            # exit(0)
             tokenizer = CzechLemmatizedTokenizer(stopwords=stop_words, cache_dir=args.cache_dir)
             preprocessor = Preprocess(tokenizer=tokenizer, vocab_size = args.vocab_size, stopwords=stop_words, seed=args.seed, verbose=args.verbose)
 

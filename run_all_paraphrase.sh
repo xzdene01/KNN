@@ -2,9 +2,9 @@
 
 # If you want to only test models, rename --save_path to --load_path and remove --log_path
 
-nums_topics=(20 200)
-nums_docs=(10000 20000)
-vocab_sizes=(40000 0) # Setting this to 0 will use the whole available vocabulary
+nums_topics=(50)
+nums_docs=(10000)
+vocab_sizes=(40000) # Setting this to 0 will use the whole available vocabulary
 
 norm="" # For non-normalized embeddings, set to "" (empty string) otherwise set to "_norm"
 
@@ -35,16 +35,16 @@ for num_topics in "${nums_topics[@]}"; do
             echo "========================================="
             
             python main.py \
-                --cache_dir models/ \
                 --save_path "$model_path" \
-                --docs_path data/splits_reduced.jsonl \
-                --embes_path data/splits_reduced_${embe_model}${norm}.h5 \
                 --test_docs_path data/reduced_dataset.csv \
                 --test_embes_path data/reduced_dataset_${embe_model}${norm}.h5 \
+                --cache_dir models/ \
+                --docs_path data/splits_reduced.jsonl \
+                --embes_path data/splits_reduced_${embe_model}${norm}.h5 \
                 --embe_model "$embe_model" \
                 --debug --batch_size 1000 --seed 42 \
                 --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
-                --log_path "$log_path" --eval_dir "$eval_dir" --epochs 200 ${normalize}
+                --eval_dir "$eval_dir" --epochs 200 ${normalize}
         done
     done
 done
