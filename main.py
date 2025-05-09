@@ -8,7 +8,8 @@ import torch
 import logging
 
 from wrappers.fastopic_wrapper import FASTopicWrapper
-from wrappers.eval_wrapper import EvaluationWrapper
+from wrappers.lda_wrapper import LDAWrapper
+from wrappers.eval_wrapper import *
 from utils.argparser import get_args, get_log_level
 from utils.seed_everything import seed_everything
 
@@ -28,33 +29,53 @@ def main():
     seed_everything(args)
     logging.debug(f"Arguments: {args.__dict__}")
 
-    wrapper = FASTopicWrapper(args)
+    if args.model_type == 'fastopic':
+        wrapper = FASTopicWrapper(args)
 
-    logging.basicConfig(level=logging.WARNING, force=True)
+        logging.basicConfig(level=logging.WARNING, force=True)
 
-    if args.log_path:
-        os.makedirs(os.path.dirname(args.log_path), exist_ok=True)
-        with open(args.log_path, "w") as f:
-            json_args = json.dumps(args.__dict__, indent=4)
-            f.write(f"Arguments: {json_args}\n")
-        print(f"Arguments saved to {args.log_path}.")
+        if args.log_path:
+            os.makedirs(os.path.dirname(args.log_path), exist_ok=True)
+            with open(args.log_path, "w") as f:
+                json_args = json.dumps(args.__dict__, indent=4)
+                f.write(f"Arguments: {json_args}\n")
+            print(f"Arguments saved to {args.log_path}.")
 
-    if args.eval_dir:
-        os.makedirs(args.eval_dir, exist_ok=True)
+        if args.eval_dir:
+            os.makedirs(args.eval_dir, exist_ok=True)
 
-        if args.test_docs_path is not None:
-            eval_wrapper = EvaluationWrapper(wrapper)
+            if args.test_docs_path is not None:
+                eval_wrapper = EvaluationWrapper(wrapper)
+                results = eval_wrapper.evaluate()
+
+                print(f"Evaluation results: {results}")
+                with open(os.path.join(args.eval_dir, "results.json"), "w") as f:
+                    json.dump(results, f, indent=4)
+                print(f"Evaluation results saved to {args.eval_dir}.")
+
+            wrapper.visualize_hierarchy(save_path=os.path.join(args.eval_dir, "hierarchy.png"))
+            wrapper.visualize_weights(save_path=os.path.join(args.eval_dir, "weights.png"))
+            print(f"Visualizations saved to {args.eval_dir}.")
+    
+    elif args.model_type == 'lda':
+        wrapper = LDAWrapper(args)
+        logging.basicConfig(level=logging.WARNING, force=True)
+        
+        if args.log_path:
+            os.makedirs(os.path.dirname(args.log_path), exist_ok=True)
+            with open(args.log_path, "w") as f:
+                json_args = json.dumps(args.__dict__, indent=4)
+                f.write(f"Arguments: {json_args}\n")
+            print(f"Arguments saved to {args.log_path}.")
+        
+        if args.eval_dir:
+            os.makedirs(args.eval_dir, exist_ok=True)
+            
+            eval_wrapper = LDAEvaluationWrapper(wrapper)
             results = eval_wrapper.evaluate()
-
-            print(f"Evaluation results: {results}")
-            with open(os.path.join(args.eval_dir, "results.json"), "w") as f:
+        
+            with open(os.path.join(args.eval_dir, "results_lda.json"), "w") as f:
                 json.dump(results, f, indent=4)
-            print(f"Evaluation results saved to {args.eval_dir}.")
-
-        wrapper.visualize_hierarchy(save_path=os.path.join(args.eval_dir, "hierarchy.png"))
-        wrapper.visualize_weights(save_path=os.path.join(args.eval_dir, "weights.png"))
-        print(f"Visualizations saved to {args.eval_dir}.")
-
 
 if __name__ == '__main__':
     main()

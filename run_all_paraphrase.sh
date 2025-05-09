@@ -45,6 +45,13 @@ for num_topics in "${nums_topics[@]}"; do
                 --debug --batch_size 1000 --seed 42 \
                 --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
                 --eval_dir "$eval_dir" --epochs 200 ${normalize}
+            # to run LDA
+            # python main.py \
+            #     --docs_path data/splits_reduced.jsonl \
+            #     --test_docs_path data/reduced_dataset.csv \
+            #     --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
+            #     --eval_dir "$eval_dir" --seed 42 --debug  \
+            #     --model_type lda
         done
     done
 done
