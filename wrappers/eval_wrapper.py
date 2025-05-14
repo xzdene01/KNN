@@ -164,7 +164,7 @@ class LDAEvaluationWrapper:
         diversity = eva.topic_diversity._diversity(topics_as_strings)
 
         # Load labeled dataset
-        dataset = pd.read_csv(self.test_dataset_path)[:self.args.num_docs]
+        dataset = pd.read_csv(self.test_dataset_path)
         test_data = dataset["content"].astype(str).tolist()
         test_labels = dataset["topic"]
 
