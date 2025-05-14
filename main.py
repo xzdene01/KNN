@@ -19,10 +19,11 @@ from utils.seed_everything import seed_everything
 # !!! Through this workaround can be downloaded even unsafe model, use only on trusted models or downgrade to older PyTorch vesrion !!!
 original_load = torch.load
 def load_wrapper(*args, **kwargs):
-    logging.warning("The 'weights_only' option of 'torch.load' has been forcibly disabled." )
+    logging.warning("The 'weights_only' option of 'torch.load' has been forcibly disabled.")
     kwargs["weights_only"] = False
     return original_load(*args, **kwargs)
 torch.load = load_wrapper
+
 
 def main():
     args = get_args()
