@@ -10,6 +10,7 @@ from topmost.preprocess import Preprocess
 import numpy as np
 from wrappers.lda_wrapper import LDAWrapper
 from wrappers.bertopic_wrapper import BERTopicWrapper
+import stopwordsiso as stopwords
 
 # Wrapper class for evaluating the five evaluation metrics of a model
 # 
@@ -40,7 +41,7 @@ class EvaluationWrapper:
         texts = self.model_wrapper.all_docs
         vocab = self.model_wrapper.model.vocab
         top_words = self.model_wrapper.model.get_top_words(self.model_wrapper.args.num_top_words, verbose=False)
-        stop_words = get_stop_words(self.args.stopwords)
+        stop_words = get_stop_words(self.args.stopwords) + list(stopwords.stopwords("cs"))
 
         # Fixes issue with nan: https://github.com/BobXWu/TopMost/issues/12
         tokenizer = CzechLemmatizedTokenizer(stopwords=stop_words, cache_dir=self.args.cache_dir)
@@ -164,7 +165,7 @@ class LDAEvaluationWrapper:
         diversity = eva.topic_diversity._diversity(topics_as_strings)
 
         # Load labeled dataset
-        dataset = pd.read_csv(self.test_dataset_path)[:self.args.num_docs]
+        dataset = pd.read_csv(self.test_dataset_path)
         test_data = dataset["content"].astype(str).tolist()
         test_labels = dataset["topic"]
 

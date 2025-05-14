@@ -50,7 +50,7 @@ for num_topics in "${nums_topics[@]}"; do
             #     --docs_path data/splits_reduced.jsonl \
             #     --test_docs_path data/reduced_dataset.csv \
             #     --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
-            #     --eval_dir "$eval_dir" --seed 42 --debug  \
+            #     --eval_dir lda/ --seed 42 --debug  \
             #     --model_type lda
         done
     done
