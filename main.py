@@ -9,6 +9,7 @@ import logging
 
 from wrappers.fastopic_wrapper import FASTopicWrapper
 from wrappers.lda_wrapper import LDAWrapper
+from wrappers.bertopic_wrapper import BERTopicWrapper
 from wrappers.eval_wrapper import *
 from utils.argparser import get_args, get_log_level
 from utils.seed_everything import seed_everything
@@ -76,6 +77,27 @@ def main():
         
             with open(os.path.join(args.eval_dir, "results_lda.json"), "w") as f:
                 json.dump(results, f, indent=4)
+    elif args.model_type == 'bertopic':
+        logging.basicConfig(level=logging.WARNING, force=True)
+
+        bert_wrapper = BERTopicWrapper(args)
+        
+        if args.log_path:
+            os.makedirs(os.path.dirname(args.log_path), exist_ok=True)
+            with open(args.log_path, "w") as f:
+                json_args = json.dumps(args.__dict__, indent=4)
+                f.write(f"Arguments: {json_args}\n")
+            print(f"Arguments saved to {args.log_path}.")
+        
+        if args.eval_dir:
+            os.makedirs(args.eval_dir, exist_ok=True)
+            
+            eval_wrapper = BERTopicEvalWrapper(bert_wrapper)
+            results = eval_wrapper.evaluate()
+        
+            with open(os.path.join(args.eval_dir, "results_lda.json"), "w") as f:
+                json.dump(results, f, indent=4)
+        
 
 if __name__ == '__main__':
     main()

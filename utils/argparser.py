@@ -55,7 +55,7 @@ def get_args():
     parser.add_argument("--test_docs_path", type=str, default=None, help="Path to documents file used for supervised training.")
     parser.add_argument("--test_embes_path", type=str, default=None, help="Path to embeddings file used for supervised training.")
 
-    parser.add_argument('--model_type', type=str, default='fastopic', choices=['fastopic', 'lda'])
+    parser.add_argument('--model_type', type=str, default='fastopic', choices=['fastopic', 'lda', 'bertopic'])
 
     args = parser.parse_args()
 
