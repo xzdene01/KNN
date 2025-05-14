@@ -9,6 +9,7 @@ from utils.tokenizers import CzechLemmatizedTokenizer
 from topmost import Preprocess
 import numpy as np
 from wrappers.lda_wrapper import LDAWrapper
+import stopwordsiso as stopwords
 
 # Wrapper class for evaluating the five evaluation metrics of a model
 # 
@@ -39,7 +40,7 @@ class EvaluationWrapper:
         texts = self.model_wrapper.all_docs
         vocab = self.model_wrapper.model.vocab
         top_words = self.model_wrapper.model.get_top_words(self.model_wrapper.args.num_top_words, verbose=False)
-        stop_words = get_stop_words(self.args.stopwords)
+        stop_words = get_stop_words(self.args.stopwords) + list(stopwords.stopwords("cs"))
 
         # Fixes issue with nan: https://github.com/BobXWu/TopMost/issues/12
         tokenizer = CzechLemmatizedTokenizer(stopwords=stop_words, cache_dir=self.args.cache_dir)
