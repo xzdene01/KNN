@@ -1,8 +1,8 @@
 import os
 import torch
-import numpy as np
 import logging
 import argparse
+import numpy as np
 import stopwordsiso as stopwords
 from fastopic import FASTopic
 from stop_words import get_stop_words
@@ -40,7 +40,7 @@ class FASTopicWrapper(WrapperBase):
             # Create Preprocessor that will be later used to convert data into BoW representation
             stop_words = get_stop_words(args.stopwords) + list(stopwords.stopwords("cs"))
             tokenizer = CzechLemmatizedTokenizer(stopwords=stop_words, cache_dir=args.cache_dir)
-            preprocessor = Preprocess(tokenizer=tokenizer, vocab_size = args.vocab_size, stopwords=stop_words, seed=args.seed, verbose=args.verbose)
+            preprocessor = Preprocess(tokenizer=tokenizer, vocab_size=args.vocab_size, stopwords=stop_words, seed=args.seed, verbose=args.verbose)
 
             if args.embes_path:
                 # Load pre-computed embeddings from h5 file
@@ -88,8 +88,8 @@ class FASTopicWrapper(WrapperBase):
                              low_memory=args.batch_size is not None,
                              low_memory_batch_size=args.batch_size,
                              verbose=args.verbose,
-                             normalize_embeddings=args.norm_embes,
-                             DT_alpha=10.0, TW_alpha=10.0)
+                             DT_alpha=7.0, TW_alpha=7.0,  # This is only for BGE-gemma2 due to big embedding dim
+                             normalize_embeddings=args.norm_embes)
 
             model.fit_transform(docs, epochs=args.epochs, learning_rate=args.lr)
             self.model = model
@@ -98,8 +98,8 @@ class FASTopicWrapper(WrapperBase):
         if args.save_path:
             try:
                 self.model.save(args.save_path)
-            except Exception as e:
-                logging.warning(f"Failed to save model with tokenizer, trying without.")
+            except Exception:
+                logging.warning("Failed to save model with tokenizer, trying without.")
                 del self.model.preprocess.tokenizer
                 self.model.save(args.save_path)
 
