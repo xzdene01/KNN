@@ -230,6 +230,7 @@ class BERTopicEvalWrapper:
     def evaluate(self):
 
         # Load docs from jsonl file (jsonl or csv)
+        logging.info("Loading training docs")
         docs = load_docs(self.args.docs_path)
         if self.args.num_docs > len(docs):
             self.args.num_docs = len(docs)
@@ -239,6 +240,7 @@ class BERTopicEvalWrapper:
         docs = [docs[i] for i in self.doc_idxs]
 
         # Load training text embeddings
+        logging.info("Loading embeddings for the training docs")
         embeddings = load_h5(self.args.embes_path, device=self.args.device)
         embeddings = embeddings[:len(docs)]
 
@@ -254,13 +256,14 @@ class BERTopicEvalWrapper:
 
         model = BERTopic(language=None, top_n_words=self.args.num_top_words, nr_topics=self.args.num_topics, verbose=self.args.verbose, calculate_probabilities=True, vectorizer_model=vectorizer)
 
+        logging.info("Fitting the model")
         predictions, probs = model.fit_transform(docs, embeddings.numpy())
 
         top_words = list()
         for item in model.get_topics().values():
             top_words.append(' '.join([x[0] for x in item]))
 
-        logging.info("Preprocessing training set")
+        logging.info("Preprocessing training docs according to the models vocab")
         preprocessed_docs, _ = preprocessor.parse(docs, model.vectorizer_model.vocabulary_)
 
         # Helps with issue with coherence being nan https://github.com/piskvorky/gensim/issues/3040#issuecomment-812913521
@@ -276,27 +279,30 @@ class BERTopicEvalWrapper:
         diversity = eva.topic_diversity._diversity(top_words)
 
         # Loading of dataset for clustering and classification
-        logging.info("Loading testing set")
+        logging.info("Loading testing docs")
         dataset = pd.read_csv(self.test_dataset_path)
         test_data = dataset["content"].to_list()
         test_labels = dataset["topic"].to_list()
+        dataset_embeddings = load_h5(self.test_dataset_embeddings_path, device=self.args.device)
 
-        logging.info("Preprocessing testing set")
+        logging.info("Preprocessing testing docs according to the models vocab")
         preprocessed_dataset, _ = preprocessor.parse(test_data, model.vectorizer_model.vocabulary_)
+
+        # Calculate theta on the preprocessed dataset
+        logging.info("Calculating doc-topic distribution for clustering and classification")
+        _, dataset_theta = model.fit_transform(preprocessed_dataset, embeddings=dataset_embeddings.numpy())
 
         # Calculate Purity and NMI
         logging.info("Calculating clustering")
-        test_theta, _ = model.approximate_distribution(preprocessed_dataset)
-        clustering_results = eva._clustering(test_theta, test_labels)
+        clustering_results = eva._clustering(dataset_theta, test_labels)
 
         # Split dataset into training and testing portions
-        train_dataset, test_dataset = self.split_train_test(preprocessed_dataset)
         train_labels, test_labels = self.split_train_test(test_labels)
+        # Split the theta which is an np array of n x m (docs x embeds) along the axis n
+        train_theta, test_theta = self.split_train_test(dataset_theta)
 
         # Calculate accuracy and F1
         logging.info("Calculating classification")
-        train_theta, _ = model.approximate_distribution(train_dataset)
-        test_theta, _ = model.approximate_distribution(test_dataset)
         classification_results = eva.classification._cls(train_theta, test_theta, train_labels, test_labels)
        
         return {
