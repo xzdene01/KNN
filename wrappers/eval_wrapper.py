@@ -277,11 +277,9 @@ class BERTopicEvalWrapper:
 
         # Loading of dataset for clustering and classification
         logging.info("Loading testing set")
-        dataset = pd.read_csv(self.test_dataset_path)[:self.args.num_docs]
+        dataset = pd.read_csv(self.test_dataset_path)
         test_data = dataset["content"].to_list()
         test_labels = dataset["topic"].to_list()
-        dataset_embeddings = load_h5(self.test_dataset_embeddings_path, device=self.args.device).numpy()
-        dataset_embeddings = dataset_embeddings[:len(test_data)]
 
         logging.info("Preprocessing testing set")
         preprocessed_dataset, _ = preprocessor.parse(test_data, model.vectorizer_model.vocabulary_)
