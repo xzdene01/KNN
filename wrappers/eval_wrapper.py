@@ -9,8 +9,10 @@ from utils.tokenizers import CzechLemmatizedTokenizer
 from topmost.preprocess import Preprocess
 import numpy as np
 from wrappers.lda_wrapper import LDAWrapper
-from wrappers.bertopic_wrapper import BERTopicWrapper
-import stopwordsiso as stopwords
+from bertopic import BERTopic
+from utils.dataset import load_docs,load_h5,get_shuffled_idxs
+from sklearn.feature_extraction.text import CountVectorizer
+import logging
 
 # Wrapper class for evaluating the five evaluation metrics of a model
 # 
@@ -204,9 +206,8 @@ class LDAEvaluationWrapper:
         return dataset.iloc[:train_len], dataset.iloc[train_len:]
 
 class BERTopicEvalWrapper:
-    def __init__(self, model_wrapper: BERTopicWrapper):
-        self.model_wrapper = model_wrapper
-        self.args = model_wrapper.args
+    def __init__(self, args):
+        self.args = args
 
         if self.args.test_docs_path is None:
             raise ValueError("test_docs_path is required for evaluation.")
@@ -217,57 +218,94 @@ class BERTopicEvalWrapper:
         self.test_dataset_path = self.args.test_docs_path
         self.test_dataset_embeddings_path = self.args.test_embes_path
 
+    def split_train_test(self, x, ratio=0.1):
+        x_len = len(x)
+        train_len = int(x_len * (1 - ratio))
+
+        train_x = x[0:train_len]
+        test_x = x[train_len:]
+
+        return train_x, test_x
+
     def evaluate(self):
-        # top_words = self.model_wrapper.get_top_words()
-        top_words = list()
-        for item in self.model_wrapper.model.get_topics().values():
-            top_words.append(''.join([x[0] for x in item]))
-        
-        diversity = eva.topic_diversity._diversity(top_words)
-        print(f"diversity = {diversity}")
 
-        texts = self.model_wrapper.all_docs
-        vocab = self.model_wrapper.model.vectorizer_model.vocabulary_
+        # Load docs from jsonl file (jsonl or csv)
+        docs = load_docs(self.args.docs_path)
+        if self.args.num_docs > len(docs):
+            self.args.num_docs = len(docs)
+            logging.warning(f"Number of documents is smaller than requested number of documents, using {self.args.num_docs} documents.")
+        self.doc_idxs = get_shuffled_idxs(len(docs), self.args.num_docs, device=self.args.device)
+        self.all_docs = docs
+        docs = [docs[i] for i in self.doc_idxs]
 
-        # Get top words
-        top_words = list()
-        for item in self.model_wrapper.model.get_topics().values():
-            top_words.append(' '.join([x[0] for x in item]))
+        # Load training text embeddings
+        embeddings = load_h5(self.args.embes_path, device=self.args.device)
+        embeddings = embeddings[:len(docs)]
 
         stop_words = get_stop_words(self.args.stopwords)
-
         tokenizer = CzechLemmatizedTokenizer(stopwords=stop_words, cache_dir=self.args.cache_dir)
+        vectorizer = CountVectorizer(tokenizer=tokenizer, stop_words=stop_words, strip_accents=None)
         preprocessor = Preprocess(tokenizer=tokenizer,
             vocab_size = self.args.vocab_size,
             stopwords=stop_words,
             seed=self.args.seed,
             verbose=self.args.verbose
         )
-        # Can take a long time, if the texts are quite big
-        # preprocessed_docs, _ = preprocessor.parse(texts, vocab=vocab)
-        # Fixes issue with nan: https://github.com/BobXWu/TopMost/issues/12
-        coherence = eva.topic_coherence._coherence(texts, vocab, top_words)
+
+        model = BERTopic(language=None, top_n_words=self.args.num_top_words, nr_topics=self.args.num_topics, verbose=self.args.verbose, calculate_probabilities=True, vectorizer_model=vectorizer)
+
+        predictions, probs = model.fit_transform(docs, embeddings.numpy())
+
+        top_words = list()
+        for item in model.get_topics().values():
+            top_words.append(' '.join([x[0] for x in item]))
+
+        logging.info("Preprocessing training set")
+        preprocessed_docs, _ = preprocessor.parse(docs, model.vectorizer_model.vocabulary_)
+
+        # Helps with issue with coherence being nan https://github.com/piskvorky/gensim/issues/3040#issuecomment-812913521
+        from gensim.topic_coherence import direct_confirmation_measure
+        from wrappers.cv_fix import custom_log_ratio_measure
+        
+        direct_confirmation_measure.log_ratio_measure = custom_log_ratio_measure
+
+        logging.info("Calculating topic coherence")
+        coherence = eva.topic_coherence._coherence(docs, model.vectorizer_model.vocabulary_, top_words)
+
+        logging.info("Calculating topic diversity")
+        diversity = eva.topic_diversity._diversity(top_words)
 
         # Loading of dataset for clustering and classification
-        dataset = pd.read_csv(self.test_dataset_path)
-        test_data = dataset["content"]
-        test_labels = dataset["topic"]
-        n_topics = test_labels.nunique()
+        logging.info("Loading testing set")
+        dataset = pd.read_csv(self.test_dataset_path)[:self.args.num_docs]
+        test_data = dataset["content"].to_list()
+        test_labels = dataset["topic"].to_list()
         dataset_embeddings = load_h5(self.test_dataset_embeddings_path, device=self.args.device).numpy()
+        dataset_embeddings = dataset_embeddings[:len(test_data)]
+
+        logging.info("Preprocessing testing set")
+        preprocessed_dataset, _ = preprocessor.parse(test_data, model.vectorizer_model.vocabulary_)
 
         # Calculate Purity and NMI
-        test_theta, _ = self.model_wrapper.model.approximate_distribution(test_data)
+        logging.info("Calculating clustering")
+        test_theta, _ = model.approximate_distribution(preprocessed_dataset)
         clustering_results = eva._clustering(test_theta, test_labels)
 
         # Split dataset into training and testing portions
-        train_dataset, test_dataset, train_embeds, test_embeds = split_test_train(dataset, dataset_embeddings)
+        train_dataset, test_dataset = self.split_train_test(preprocessed_dataset)
+        train_labels, test_labels = self.split_train_test(test_labels)
 
         # Calculate accuracy and F1
-        test_theta, _ = self.model_wrapper.model.approximate_distribution(test_dataset["content"])
-        train_theta, _ = self.model_wrapper.model.approximate_distribution(train_dataset["content"])
-
-        breakpoint()
-
-        classification_results = eva.classification._cls(train_theta, test_theta, train_dataset["topic"], test_dataset["topic"])
+        logging.info("Calculating classification")
+        train_theta, _ = model.approximate_distribution(train_dataset)
+        test_theta, _ = model.approximate_distribution(test_dataset)
+        classification_results = eva.classification._cls(train_theta, test_theta, train_labels, test_labels)
        
-        return {"coherence": coherence, "topic_diversity": diversity, "purity": clustering_results["Purity"], "nmi": clustering_results["NMI"], "accuracy": classification_results["acc"], "f1-score": classification_results["macro-F1"]}
+        return {
+            "coherence": coherence,
+            "topic_diversity": diversity,
+            "purity": clustering_results["Purity"],
+            "nmi": clustering_results["NMI"],
+            "accuracy": classification_results["acc"],
+            "f1-score": classification_results["macro-F1"]
+        }

@@ -52,6 +52,19 @@ for num_topics in "${nums_topics[@]}"; do
             #     --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
             #     --eval_dir lda/ --seed 42 --debug  \
             #     --model_type lda
+            # to run BERTopic
+            # python main.py\
+            #             --cache_dir models\
+            #             --docs_path data/splits_reduced.jsonl\
+            #             --embes_path data/splits_reduced_bge_norm.h5\
+            #             --model_type bertopic\
+            #             --save_path=data/bertopic.pkl\
+            #             --test_docs_path=data/reduced_dataset.csv\
+            #             --test_embes_path=data/reduced_dataset_bge_norm.h5\
+            #             --num_topics "$num_topics"\
+            #             --num_docs "$num_docs"\
+            #             ${vocab_cmd} \
+            #             --eval_dir "evals/bertopic_${num_topics}_${num_docs}_${vocab_size}"
         done
     done
 done
