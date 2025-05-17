@@ -1,3 +1,7 @@
+# This code is taken from:
+# https://github.com/piskvorky/gensim/issues/3040#issuecomment-774011839
+# Prevents Topic coherence being Nan, if there are top words in a topic which dont occur in the reference corpus
+
 import logging
 
 import numpy as np

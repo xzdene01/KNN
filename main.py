@@ -18,10 +18,11 @@ from utils.seed_everything import seed_everything
 # !!! Through this workaround can be downloaded even unsafe model, use only on trusted models or downgrade to older PyTorch vesrion !!!
 original_load = torch.load
 def load_wrapper(*args, **kwargs):
-    logging.warning("The 'weights_only' option of 'torch.load' has been forcibly disabled." )
+    logging.warning("The 'weights_only' option of 'torch.load' has been forcibly disabled.")
     kwargs["weights_only"] = False
     return original_load(*args, **kwargs)
 torch.load = load_wrapper
+
 
 def main():
     args = get_args()
@@ -56,24 +57,24 @@ def main():
             wrapper.visualize_hierarchy(save_path=os.path.join(args.eval_dir, "hierarchy.png"))
             wrapper.visualize_weights(save_path=os.path.join(args.eval_dir, "weights.png"))
             print(f"Visualizations saved to {args.eval_dir}.")
-    
+
     elif args.model_type == 'lda':
         wrapper = LDAWrapper(args)
         logging.basicConfig(level=logging.WARNING, force=True)
-        
+
         if args.log_path:
             os.makedirs(os.path.dirname(args.log_path), exist_ok=True)
             with open(args.log_path, "w") as f:
                 json_args = json.dumps(args.__dict__, indent=4)
                 f.write(f"Arguments: {json_args}\n")
             print(f"Arguments saved to {args.log_path}.")
-        
+
         if args.eval_dir:
             os.makedirs(args.eval_dir, exist_ok=True)
-            
+
             eval_wrapper = LDAEvaluationWrapper(wrapper)
             results = eval_wrapper.evaluate()
-        
+
             with open(os.path.join(args.eval_dir, "results_lda.json"), "w") as f:
                 json.dump(results, f, indent=4)
     elif args.model_type == 'bertopic':
@@ -85,16 +86,14 @@ def main():
                 json_args = json.dumps(args.__dict__, indent=4)
                 f.write(f"Arguments: {json_args}\n")
             print(f"Arguments saved to {args.log_path}.")
-        
+
         if args.eval_dir:
             os.makedirs(args.eval_dir, exist_ok=True)
             
             eval_wrapper = BERTopicEvalWrapper(args)
             results = eval_wrapper.evaluate()
-        
             with open(os.path.join(args.eval_dir, "results_bertopic.json"), "w") as f:
                 json.dump(results, f, indent=4)
-        
 
 if __name__ == '__main__':
     main()

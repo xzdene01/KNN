@@ -1,4 +1,4 @@
-# Part of this file if copied from Ing. Martin Fajčík Ph.D. and slightly modified
+# Part of this file is copied from Ing. Martin Fajčík Ph.D. and slightly modified
 
 import torch
 import numpy as np
@@ -17,6 +17,7 @@ class StubEncoder:
                ):
         assert len(docs) == self.embeddings.shape[0]
         return self.embeddings
+
 
 class BasicSentenceEmbedder:
     def __init__(
@@ -41,7 +42,7 @@ class BasicSentenceEmbedder:
     def encode(self, docs: List[str]) -> np.ndarray:
         embeddings = self.model.encode(
             docs,
-            show_progress_bar=self.verbose,
+            # show_progress_bar=self.verbose,
             normalize_embeddings=self.normalize_embeddings
         )
         return embeddings

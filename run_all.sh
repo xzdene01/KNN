@@ -2,13 +2,22 @@
 
 # If you want to only test models, rename --save_path to --load_path and remove --log_path
 
-nums_topics=(50)
+# Setting vocab_size to 0 will use the whole available vocabulary
+nums_topics=(25 50 100)
 nums_docs=(10000)
-vocab_sizes=(40000) # Setting this to 0 will use the whole available vocabulary
+vocab_sizes=(40000) 
 
-norm="" # For non-normalized embeddings, set to "" (empty string) otherwise set to "_norm"
+# nums_topics=(50)
+# nums_docs=(5000 20000)
+# vocab_sizes=(40000)
 
-embe_model="paraphrase-multilingual-MiniLM-L12-v2"
+# nums_topics=(50)
+# nums_docs=(10000)
+# vocab_sizes=(20000 0)
+
+norm="_norm" # For non-normalized embeddings, set to "" (empty string) otherwise set to "_norm"
+
+embe_model="BAAI/bge-multilingual-gemma2"
 model_root="models/fastopic_${embe_model}${norm}"
 log_root="logs/fastopic_${embe_model}${norm}"
 eval_root="results/fastopic_${embe_model}${norm}"
@@ -45,6 +54,7 @@ for num_topics in "${nums_topics[@]}"; do
                 --debug --batch_size 1000 --seed 42 \
                 --num_topics "$num_topics" --num_docs "$num_docs" ${vocab_cmd} \
                 --eval_dir "$eval_dir" --epochs 200 ${normalize}
+             
             # to run LDA
             # python main.py \
             #     --docs_path data/splits_reduced.jsonl \
